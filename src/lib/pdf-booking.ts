@@ -101,9 +101,17 @@ export async function generateBookingPdf(data: BookingPdfData): Promise<Buffer> 
   if (data.catatanAdmin) detailRows.push(["Catatan Admin", data.catatanAdmin]);
   if (data.catatanAtasan) detailRows.push(["Catatan Tambahan", data.catatanAtasan]);
 
+  // Tabel detail di-center di halaman supaya tampak seimbang. Lebar
+  // total tabel di-fix lalu margin kiri dihitung dari (pageWidth - tableWidth)/2.
+  const labelColWidth = 130;
+  const valueColWidth = 240;
+  const tableWidth = labelColWidth + valueColWidth;
+  const tableLeftMargin = (pageWidth - tableWidth) / 2;
+
   autoTable(doc, {
     startY: y,
-    margin: { left: margin, right: margin },
+    margin: { left: tableLeftMargin, right: tableLeftMargin },
+    tableWidth,
     body: detailRows,
     theme: "plain",
     styles: {
@@ -114,8 +122,8 @@ export async function generateBookingPdf(data: BookingPdfData): Promise<Buffer> 
       lineWidth: 0,
     },
     columnStyles: {
-      0: { fontStyle: "bold", cellWidth: 150, textColor: [...INK] },
-      1: { cellWidth: "auto", textColor: [...INK] },
+      0: { fontStyle: "bold", cellWidth: labelColWidth, textColor: [...INK] },
+      1: { cellWidth: valueColWidth, textColor: [...INK] },
     },
     didDrawCell: (cellData) => {
       if (cellData.column.index === 0) {
