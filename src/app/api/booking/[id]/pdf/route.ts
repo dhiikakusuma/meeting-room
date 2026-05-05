@@ -5,7 +5,7 @@ import { generateBookingPdf } from "@/lib/pdf-booking";
 
 type Ctx = { params: Promise<{ id: string }> };
 
-export async function GET(req: Request, ctx: Ctx) {
+export async function GET(_req: Request, ctx: Ctx) {
   const me = await getSessionUser();
   if (!me) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const { id } = await ctx.params;
@@ -21,9 +21,6 @@ export async function GET(req: Request, ctx: Ctx) {
   if (booking.status !== "DISETUJUI" || !booking.nomorSurat) {
     return NextResponse.json({ error: "Surat baru tersedia setelah disetujui" }, { status: 400 });
   }
-
-  const reqUrl = new URL(req.url);
-  const verifyUrl = `${reqUrl.origin}/verify/${booking.id}`;
 
   const pdf = await generateBookingPdf({
     nomorSurat: booking.nomorSurat,
@@ -43,7 +40,8 @@ export async function GET(req: Request, ctx: Ctx) {
     atasanNama: booking.atasanNama,
     atasanJabatan: booking.atasanJabatan,
     approvedAtasanAt: booking.approvedAtasanAt,
-    verifyUrl,
+    pemohonTtdUrl: booking.pemohonTtdUrl,
+    atasanTtdUrl: booking.atasanTtdUrl,
   });
 
   const filename = `surat-${booking.nomorSurat.replace(/\//g, "_")}.pdf`;

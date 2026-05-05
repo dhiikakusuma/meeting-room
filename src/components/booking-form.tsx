@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/components/ui/toast";
+import { SignaturePad, type SignaturePadHandle } from "@/components/ui/signature-pad";
 import {
   formatDateInput,
   durationLabel,
@@ -47,6 +48,8 @@ export function BookingForm({ ruangan }: { ruangan: Ruangan[] }) {
   const [recurring, setRecurring] = useState(false);
   const [occurrences, setOccurrences] = useState(4);
   const [busy, setBusy] = useState(false);
+  const signatureRef = useRef<SignaturePadHandle>(null);
+  const [pemohonTtdUrl, setPemohonTtdUrl] = useState<string | null>(null);
 
   const [booked, setBooked] = useState<Booked[]>([]);
   const [loadingAvail, setLoadingAvail] = useState(false);
@@ -87,6 +90,11 @@ export function BookingForm({ ruangan }: { ruangan: Ruangan[] }) {
     if (!ruanganId) return toast.error("Pilih ruangan");
     if (!agenda.trim()) return toast.error("Catatan agenda wajib diisi");
 
+    const ttd = pemohonTtdUrl ?? signatureRef.current?.toDataURL() ?? null;
+    if (!ttd || signatureRef.current?.isEmpty()) {
+      return toast.error("Tanda tangan pemohon wajib diisi");
+    }
+
     setBusy(true);
     const payload: Record<string, unknown> = {
       ruanganId,
@@ -96,6 +104,7 @@ export function BookingForm({ ruangan }: { ruangan: Ruangan[] }) {
       agenda: agenda.trim(),
       jumlahPeserta,
       kebutuhan,
+      pemohonTtdUrl: ttd,
     };
     if (recurring) {
       payload.recurring = { frequency: "WEEKLY", occurrences };
@@ -336,6 +345,16 @@ export function BookingForm({ ruangan }: { ruangan: Ruangan[] }) {
       </div>
 
       <div className="divider-gold" />
+
+      {/* Tanda tangan pemohon */}
+      <div className="rounded-xl border border-ink-100 bg-white p-4">
+        <SignaturePad
+          ref={signatureRef}
+          label="Tanda tangan pemohon"
+          hint="Tanda tangani di atas menggunakan mouse, trackpad, atau jari pada layar sentuh."
+          onChange={setPemohonTtdUrl}
+        />
+      </div>
 
       <div className="flex items-center justify-between gap-3">
         <p className="text-[11px] text-ink-500">

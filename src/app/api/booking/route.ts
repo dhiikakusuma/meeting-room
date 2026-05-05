@@ -14,6 +14,10 @@ const createSchema = z.object({
   agenda: z.string().min(3, "Catatan agenda wajib diisi minimal 3 karakter").max(500),
   jumlahPeserta: z.number().int().min(1).max(500),
   kebutuhan: z.array(z.string()).default([]),
+  pemohonTtdUrl: z
+    .string()
+    .startsWith("data:image/", "Tanda tangan tidak valid")
+    .min(100, "Tanda tangan pemohon wajib diisi"),
   recurring: z
     .object({
       frequency: z.enum(["WEEKLY"]),
@@ -159,6 +163,7 @@ export async function POST(req: Request) {
           jumlahPeserta: data.jumlahPeserta,
           kebutuhan: data.kebutuhan,
           status: "MENUNGGU_ADMIN",
+          pemohonTtdUrl: data.pemohonTtdUrl,
           seriesId: seriesId,
           seriesIndex: data.recurring ? i + 1 : null,
           seriesTotal: data.recurring ? dates.length : null,

@@ -6,6 +6,10 @@ import { generateNomorSurat } from "@/lib/booking-rules";
 
 const schema = z.object({
   catatan: z.string().max(500).optional().nullable(),
+  atasanTtdUrl: z
+    .string()
+    .startsWith("data:image/", "Tanda tangan tidak valid")
+    .min(100, "Tanda tangan atasan wajib diisi"),
 });
 
 type Ctx = { params: Promise<{ id: string }> };
@@ -17,7 +21,12 @@ export async function POST(req: Request, ctx: Ctx) {
 
   const body = await req.json().catch(() => ({}));
   const parsed = schema.safeParse(body);
-  if (!parsed.success) return NextResponse.json({ error: "Invalid" }, { status: 400 });
+  if (!parsed.success) {
+    return NextResponse.json(
+      { error: parsed.error.issues[0]?.message ?? "Data tidak valid" },
+      { status: 400 },
+    );
+  }
 
   const booking = await prisma.booking.findUnique({ where: { id } });
   if (!booking) return NextResponse.json({ error: "Tidak ditemukan" }, { status: 404 });
@@ -36,6 +45,7 @@ export async function POST(req: Request, ctx: Ctx) {
       atasanId: me.id,
       atasanNama: me.namaLengkap,
       atasanJabatan: me.jabatan,
+      atasanTtdUrl: parsed.data.atasanTtdUrl,
       approvedAtasanAt: new Date(),
     },
   });

@@ -19,7 +19,7 @@ export default async function BookingBaruPage() {
   });
 
   return (
-    <div className="px-5 sm:px-8 py-6 max-w-3xl">
+    <div className="mx-auto max-w-3xl px-5 sm:px-8 py-6">
       <Link
         href="/pemohon"
         className="inline-flex items-center gap-1.5 text-xs text-ink-500 hover:text-ink-900"

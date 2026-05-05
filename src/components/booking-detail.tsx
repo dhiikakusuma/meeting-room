@@ -1,10 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import Image from "next/image";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Calendar, Clock, Users, MapPin, Download, X, Check, FileSignature, History } from "lucide-react";
+import { Calendar, Clock, Users, MapPin, Download, X, Check, History } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { SignaturePad, type SignaturePadHandle } from "@/components/ui/signature-pad";
 import { StatusBadge } from "./status-badge";
 import { ConfirmDialog } from "./confirm-dialog";
 import { toast } from "@/components/ui/toast";
@@ -37,6 +39,8 @@ export type BookingDetailData = {
   seriesId: string | null;
   seriesIndex: number | null;
   seriesTotal: number | null;
+  pemohonTtdUrl: string | null;
+  atasanTtdUrl: string | null;
   ruangan: { lantai: string | null } | null;
   auditLogs: Array<{
     id: string;
@@ -61,6 +65,8 @@ export function BookingDetail({
   const [catatan, setCatatan] = useState("");
   const [busy, setBusy] = useState(false);
   const [confirmCancel, setConfirmCancel] = useState(false);
+  const atasanSigRef = useRef<SignaturePadHandle>(null);
+  const [atasanTtdUrl, setAtasanTtdUrl] = useState<string | null>(null);
 
   const tanggalDate = new Date(booking.tanggal);
   const canCancel =
@@ -72,14 +78,27 @@ export function BookingDetail({
   const atasanCanAct = role === "atasan" && booking.status === "MENUNGGU_ATASAN";
 
   async function approve() {
+    const isAtasan = role === "atasan";
+    let ttd: string | null = null;
+    if (isAtasan) {
+      ttd = atasanTtdUrl ?? atasanSigRef.current?.toDataURL() ?? null;
+      if (!ttd || atasanSigRef.current?.isEmpty()) {
+        toast.error("Tanda tangan atasan wajib diisi");
+        return;
+      }
+    }
     setBusy(true);
     const url = role === "admin"
       ? `/api/booking/${booking.id}/approve-admin`
       : `/api/booking/${booking.id}/approve-atasan`;
+    const payload: Record<string, unknown> = {
+      catatan: catatan.trim() || null,
+    };
+    if (isAtasan) payload.atasanTtdUrl = ttd;
     const res = await fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ catatan: catatan.trim() || null }),
+      body: JSON.stringify(payload),
     });
     const data = await res.json();
     if (!res.ok) {
@@ -268,6 +287,14 @@ export function BookingDetail({
             onChange={(e) => setCatatan(e.target.value)}
             rows={3}
           />
+          {atasanCanAct && (
+            <SignaturePad
+              ref={atasanSigRef}
+              label="Tanda tangan atasan"
+              hint="Wajib ditandatangani sebelum surat resmi diterbitkan."
+              onChange={setAtasanTtdUrl}
+            />
+          )}
           <div className="flex flex-wrap gap-2 justify-end">
             <Button variant="destructive" disabled={busy} onClick={reject}>
               <X className="h-4 w-4" />
@@ -281,6 +308,27 @@ export function BookingDetail({
               <Check className="h-4 w-4" />
               {atasanCanAct ? "Setujui & Terbitkan Surat" : "Teruskan ke Atasan"}
             </Button>
+          </div>
+        </div>
+      )}
+
+      {/* Signatures preview (after approval) */}
+      {(booking.pemohonTtdUrl || booking.atasanTtdUrl) && (
+        <div className="rounded-2xl border border-ink-100 bg-white p-5">
+          <p className="text-[11px] tracking-[0.16em] uppercase text-gold-700 serif mb-3">
+            Tanda Tangan
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <SignatureBlock
+              title="Pemohon"
+              name={booking.pemohonNama}
+              dataUrl={booking.pemohonTtdUrl}
+            />
+            <SignatureBlock
+              title={booking.atasanJabatan ?? "Atasan"}
+              name={booking.atasanNama ?? "—"}
+              dataUrl={booking.atasanTtdUrl}
+            />
           </div>
         </div>
       )}
@@ -394,6 +442,38 @@ function Note({
   );
 }
 
+function SignatureBlock({
+  title,
+  name,
+  dataUrl,
+}: {
+  title: string;
+  name: string;
+  dataUrl: string | null;
+}) {
+  return (
+    <div className="rounded-xl border border-ink-100 p-4 bg-cream-50/40">
+      <p className="text-[10.5px] tracking-[0.14em] uppercase text-ink-500 serif">
+        {title}
+      </p>
+      <div className="mt-2 h-24 flex items-center justify-center bg-white rounded-md border border-ink-100">
+        {dataUrl ? (
+          <Image
+            src={dataUrl}
+            alt={`Tanda tangan ${title}`}
+            width={200}
+            height={80}
+            className="max-h-20 w-auto object-contain"
+            unoptimized
+          />
+        ) : (
+          <span className="text-[11px] italic text-ink-400 serif">Belum ditandatangani</span>
+        )}
+      </div>
+      <p className="serif text-sm text-ink-900 mt-2 text-center">{name}</p>
+    </div>
+  );
+}
+
 // Suppress unused warning for STATUS_LABELS (used elsewhere)
 void STATUS_LABELS;
-void FileSignature;

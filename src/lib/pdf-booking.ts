@@ -1,6 +1,5 @@
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
-import QRCode from "qrcode";
 import { formatTanggalLong } from "./datetime";
 
 export type BookingPdfData = {
@@ -21,11 +20,11 @@ export type BookingPdfData = {
   atasanNama?: string | null;
   atasanJabatan?: string | null;
   approvedAtasanAt?: Date | null;
-  verifyUrl?: string;
+  pemohonTtdUrl?: string | null;
+  atasanTtdUrl?: string | null;
 };
 
 const INK = [15, 23, 42] as const;
-const GOLD = [201, 148, 31] as const;
 const MUTED = [90, 101, 122] as const;
 
 export async function generateBookingPdf(data: BookingPdfData): Promise<Buffer> {
@@ -33,10 +32,6 @@ export async function generateBookingPdf(data: BookingPdfData): Promise<Buffer> 
   const pageWidth = doc.internal.pageSize.getWidth();
   const margin = 56;
   let y = margin;
-
-  // Top gold bar
-  doc.setFillColor(...GOLD);
-  doc.rect(0, 0, pageWidth, 4, "F");
 
   // Kop surat
   doc.setFont("helvetica", "bold");
@@ -62,12 +57,9 @@ export async function generateBookingPdf(data: BookingPdfData): Promise<Buffer> 
   );
   y += 18;
 
-  // Divider gold
-  doc.setDrawColor(...GOLD);
-  doc.setLineWidth(1.2);
-  doc.line(margin, y, pageWidth - margin, y);
-  y += 6;
-  doc.setLineWidth(0.4);
+  // Divider hitam (single line, kop surat resmi style)
+  doc.setDrawColor(...INK);
+  doc.setLineWidth(1);
   doc.line(margin, y, pageWidth - margin, y);
   y += 28;
 
@@ -150,39 +142,64 @@ export async function generateBookingPdf(data: BookingPdfData): Promise<Buffer> 
   );
   y += 28;
 
-  // Tanda tangan section
+  // Tanda tangan section: Pemohon (kiri) & Atasan (kanan)
   const tanggalSurat = data.approvedAtasanAt ?? new Date();
-  const ttdRightX = pageWidth - margin - 180;
-  doc.text(`Balikpapan, ${formatTanggalLong(tanggalSurat)}`, ttdRightX, y);
-  y += 14;
-  doc.text(data.atasanJabatan || "Kepala Dinas", ttdRightX, y);
-  y += 70;
-  doc.setFont("helvetica", "bold");
-  doc.text(`( ${data.atasanNama ?? "-"} )`, ttdRightX, y);
-  doc.setFont("helvetica", "normal");
-  y += 30;
+  const innerWidth = pageWidth - margin * 2;
+  const colWidth = innerWidth / 2;
+  const leftX = margin;
+  const rightX = margin + colWidth;
+  const sigBoxWidth = 180;
+  const sigBoxHeight = 64;
 
-  // QR Code (kiri bawah) untuk verifikasi
-  if (data.verifyUrl) {
+  // Heading kanan: "Balikpapan, <tanggal>" + jabatan atasan
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(10.5);
+  doc.setTextColor(...INK);
+  doc.text(`Balikpapan, ${formatTanggalLong(tanggalSurat)}`, rightX, y);
+  doc.text(data.atasanJabatan || "Kepala Dinas", rightX, y + 14);
+
+  // Heading kiri: "Pemohon"
+  doc.text("Pemohon,", leftX, y);
+
+  const sigYStart = y + 22;
+
+  // Render gambar tanda tangan jika ada
+  if (data.pemohonTtdUrl) {
     try {
-      const qrDataUrl = await QRCode.toDataURL(data.verifyUrl, {
-        margin: 0,
-        width: 200,
-        errorCorrectionLevel: "M",
-      });
-      const qrSize = 90;
-      const qrX = margin;
-      const qrY = y - 110;
-      doc.addImage(qrDataUrl, "PNG", qrX, qrY, qrSize, qrSize);
-      doc.setFontSize(8);
-      doc.setTextColor(...MUTED);
-      doc.text("Scan QR untuk verifikasi", qrX, qrY + qrSize + 12);
-      doc.setFontSize(7);
-      doc.text(data.verifyUrl, qrX, qrY + qrSize + 22, { maxWidth: 220 });
+      doc.addImage(
+        data.pemohonTtdUrl,
+        "PNG",
+        leftX,
+        sigYStart,
+        sigBoxWidth,
+        sigBoxHeight,
+      );
     } catch {
-      // ignore QR failure
+      // ignore image render failure
     }
   }
+  if (data.atasanTtdUrl) {
+    try {
+      doc.addImage(
+        data.atasanTtdUrl,
+        "PNG",
+        rightX,
+        sigYStart,
+        sigBoxWidth,
+        sigBoxHeight,
+      );
+    } catch {
+      // ignore image render failure
+    }
+  }
+
+  // Garis tanda tangan + nama
+  const nameY = sigYStart + sigBoxHeight + 4;
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(...INK);
+  doc.text(`( ${data.pemohonNama} )`, leftX, nameY);
+  doc.text(`( ${data.atasanNama ?? "-"} )`, rightX, nameY);
+  doc.setFont("helvetica", "normal");
 
   // Footer note
   doc.setFontSize(8);
