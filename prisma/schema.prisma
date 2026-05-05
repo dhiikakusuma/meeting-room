@@ -1,0 +1,153 @@
+// Booking Ruang Rapat — DP3AKB Kota Balikpapan
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id           String   @id @default(cuid())
+  namaLengkap  String
+  jabatan      String?
+  role         String   @default("pemohon") // pemohon | admin | atasan
+  passwordHash String?
+  bidangId     String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  bidang                   Bidang?    @relation(fields: [bidangId], references: [id])
+  bookingsAsPemohon        Booking[]  @relation("PemohonToBooking")
+  bookingsApprovedAsAdmin  Booking[]  @relation("AdminToBooking")
+  bookingsApprovedAsAtasan Booking[]  @relation("AtasanToBooking")
+  auditLogs                AuditLog[]
+
+  @@index([role])
+  @@index([namaLengkap])
+  @@map("users")
+}
+
+model Bidang {
+  id        String   @id @default(cuid())
+  nama      String
+  kode      String?
+  urutan    Int      @default(0)
+  aktif     Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users    User[]
+  bookings Booking[]
+
+  @@map("bidang")
+}
+
+model Ruangan {
+  id         String   @id @default(cuid())
+  nama       String
+  lantai     String?
+  kapasitas  Int      @default(20)
+  fasilitas  String[] @default([])
+  fotoUrl    String?
+  aktif      Boolean  @default(true)
+  urutan     Int      @default(0)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  bookings Booking[]
+
+  @@map("ruangan")
+}
+
+model Booking {
+  id              String   @id @default(cuid())
+  nomorSurat      String?  @unique
+
+  pemohonId       String
+  pemohonNama     String   // snapshot saat submit
+  bidangId        String?
+  bidangNama      String   // snapshot saat submit
+  ruanganId       String
+  ruanganNama     String   // snapshot
+
+  tanggal         DateTime // tanggal acara (00:00 lokal)
+  jamMulai        String   // "HH:mm"
+  jamSelesai      String   // "HH:mm"
+
+  jumlahPeserta   Int      @default(0)
+  agenda          String   // catatan acara — wajib
+  kebutuhan       String[] @default([]) // proyektor, snack, dll
+
+  status          String   @default("MENUNGGU_ADMIN")
+  // MENUNGGU_ADMIN -> MENUNGGU_ATASAN -> DISETUJUI
+  //                 -> DITOLAK_ADMIN
+  //                 -> DITOLAK_ATASAN
+  // BATAL_PEMOHON
+
+  catatanAdmin    String?
+  catatanAtasan   String?
+
+  adminId         String?
+  adminNama       String?
+  atasanId        String?
+  atasanNama      String?
+  atasanJabatan   String?
+
+  // Recurring
+  seriesId        String?  // grouping id untuk rapat berulang
+  seriesIndex     Int?     // urutan ke-n dalam series
+  seriesTotal     Int?     // total occurrences
+  seriesFrequency String?  // WEEKLY | DAILY (saat dibuat)
+
+  approvedAdminAt  DateTime?
+  approvedAtasanAt DateTime?
+  rejectedAt       DateTime?
+  cancelledAt      DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  pemohon   User    @relation("PemohonToBooking", fields: [pemohonId], references: [id])
+  bidang    Bidang? @relation(fields: [bidangId], references: [id])
+  ruangan   Ruangan @relation(fields: [ruanganId], references: [id])
+  admin     User?   @relation("AdminToBooking", fields: [adminId], references: [id])
+  atasan    User?   @relation("AtasanToBooking", fields: [atasanId], references: [id])
+  auditLogs AuditLog[]
+
+  @@index([status])
+  @@index([tanggal])
+  @@index([ruanganId, tanggal])
+  @@index([pemohonId])
+  @@index([seriesId])
+  @@map("bookings")
+}
+
+model AuditLog {
+  id          String   @id @default(cuid())
+  bookingId   String?
+  userId      String?
+  actorName   String
+  actorRole   String?
+  action      String   // SUBMIT | APPROVE_ADMIN | APPROVE_ATASAN | REJECT_ADMIN | REJECT_ATASAN | CANCEL | EDIT_ROOM | EDIT_BIDANG ...
+  detail      String?
+  timestamp   DateTime @default(now())
+
+  booking Booking? @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  user    User?    @relation(fields: [userId], references: [id])
+
+  @@index([bookingId])
+  @@map("audit_logs")
+}
+
+model NomorSuratCounter {
+  id        String   @id @default(cuid())
+  tahun     Int
+  bulan     Int      // 1-12
+  counter   Int      @default(0)
+  updatedAt DateTime @updatedAt
+
+  @@unique([tahun, bulan])
+  @@map("nomor_surat_counter")
+}

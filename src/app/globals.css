@@ -1,0 +1,156 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-serif: var(--font-fraunces), ui-serif, Georgia, serif;
+
+  /* Ink — deep navy / formal */
+  --color-ink-50: #f6f7f9;
+  --color-ink-100: #eceef2;
+  --color-ink-200: #d9dde5;
+  --color-ink-300: #b6bdcb;
+  --color-ink-400: #818b9e;
+  --color-ink-500: #5a657a;
+  --color-ink-600: #3f4a60;
+  --color-ink-700: #2c3548;
+  --color-ink-800: #1c2335;
+  --color-ink-900: #0f172a;
+  --color-ink-950: #0a0f1f;
+
+  /* Gold — formal accent */
+  --color-gold-50: #fdf9ec;
+  --color-gold-100: #f9eecc;
+  --color-gold-200: #f1d989;
+  --color-gold-300: #dfb13a;
+  --color-gold-400: #c9941f;
+  --color-gold-500: #b07d18;
+  --color-gold-600: #92651a;
+  --color-gold-700: #74501c;
+  --color-gold-800: #5d3d1c;
+  --color-gold-900: #3f2810;
+
+  /* Cream — surface */
+  --color-cream-50: #fbf9f6;
+  --color-cream-100: #f4efe8;
+  --color-cream-200: #e7ddcd;
+  --color-cream-300: #d1bf9f;
+}
+
+:root {
+  --background: #fbf9f6;
+  --foreground: #0f172a;
+  --muted: #5a657a;
+  --border: rgba(15, 23, 42, 0.08);
+  --card: #ffffff;
+  --ring: #c9941f;
+}
+
+* {
+  border-color: var(--border);
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+.serif {
+  font-family: var(--font-serif);
+  letter-spacing: -0.01em;
+}
+.nums {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Hero photo with building/room */
+.hero-building {
+  background-image:
+    linear-gradient(180deg, rgba(15, 23, 42, 0) 35%, rgba(15, 23, 42, 0.85) 100%),
+    url("/dp3akb-building.jpg");
+  background-size: cover;
+  background-position: center 42%;
+}
+
+.hero-room {
+  background-image:
+    linear-gradient(180deg, rgba(15, 23, 42, 0.45) 0%, rgba(15, 23, 42, 0.65) 100%),
+    url("/dp3akb-room.jpg");
+  background-size: cover;
+  background-position: center 55%;
+}
+
+.room-soft {
+  background-image:
+    linear-gradient(180deg, rgba(15, 23, 42, 0.05) 0%, rgba(15, 23, 42, 0.55) 100%),
+    url("/dp3akb-room.jpg");
+  background-size: cover;
+  background-position: center 55%;
+}
+
+/* Gold gradient button accent */
+.btn-gold-grad {
+  background: linear-gradient(180deg, #dfb13a 0%, #c9941f 100%);
+  color: #1c2335;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.5) inset, 0 8px 20px -8px rgba(201, 148, 31, 0.6);
+}
+.btn-gold-grad:hover {
+  filter: brightness(1.04);
+}
+
+/* Divider */
+.divider-gold {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(201, 148, 31, 0.5), transparent);
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(15, 23, 42, 0.18);
+  border-radius: 999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(15, 23, 42, 0.32);
+}
+
+/* Skeleton shimmer */
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+.shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(15, 23, 42, 0.06) 0%,
+    rgba(15, 23, 42, 0.12) 50%,
+    rgba(15, 23, 42, 0.06) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.6s linear infinite;
+}
+
+/* Status pill base */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.125rem 0.5rem;
+  font-size: 11px;
+  font-weight: 500;
+  border-radius: 999px;
+  border-width: 1px;
+}
