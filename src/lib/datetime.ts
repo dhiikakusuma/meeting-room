@@ -55,10 +55,16 @@ export function isOverlap(
   bEnd: string,
   bufferMinutes: number = 0,
 ): boolean {
+  // Buffer diterapkan secara simetris: setiap interval "diperpanjang" sebesar
+  // buffer di sisi akhirnya. Contoh dengan buffer 15 menit:
+  //   A: 09:00–10:00 (efektif 09:00–10:15)
+  //   B: 10:05–11:00 (efektif 10:05–11:15)
+  // → tabrakan terdeteksi (gap aktual < 15 menit). Kalau B mulai 10:15+,
+  // gap 15 menit tepat dianggap aman (boundary inklusif).
   const as = timeToMinutes(aStart);
   const ae = timeToMinutes(aEnd) + bufferMinutes;
   const bs = timeToMinutes(bStart);
-  const be = timeToMinutes(bEnd);
+  const be = timeToMinutes(bEnd) + bufferMinutes;
   return as < be && bs < ae;
 }
 

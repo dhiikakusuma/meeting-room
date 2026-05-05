@@ -153,21 +153,16 @@ export function BookingInboxAdmin({ items }: { items: Item[] }) {
       </div>
 
       <ConfirmDialog
-        open={bulkAction !== null}
+        open={bulkAction === "APPROVE"}
         onOpenChange={(o) => {
           if (!o) {
             setBulkAction(null);
             setBulkCatatan("");
           }
         }}
-        title={bulkAction === "APPROVE" ? "Setujui pengajuan terpilih?" : "Tolak pengajuan terpilih?"}
-        description={
-          bulkAction === "APPROVE"
-            ? `${selected.size} pengajuan akan diteruskan ke atasan untuk persetujuan akhir.`
-            : `${selected.size} pengajuan akan ditolak. Alasan akan dilihat pemohon.`
-        }
-        confirmText={busy ? "Memproses…" : bulkAction === "APPROVE" ? "Ya, teruskan" : "Ya, tolak"}
-        destructive={bulkAction === "REJECT"}
+        title="Setujui pengajuan terpilih?"
+        description={`${selected.size} pengajuan akan diteruskan ke atasan untuk persetujuan akhir.`}
+        confirmText={busy ? "Memproses…" : "Ya, teruskan"}
         onConfirm={executeBulk}
       />
 
