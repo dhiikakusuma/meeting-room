@@ -1,11 +1,13 @@
 // Booking Ruang Rapat — DP3AKB Kota Balikpapan
 
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
+  previewFeatures = ["multiSchema"]
 }
 
 datasource db {
   provider = "postgresql"
+  schemas  = ["meeting_room"]
 }
 
 model User {
@@ -27,6 +29,7 @@ model User {
   @@index([role])
   @@index([namaLengkap])
   @@map("users")
+  @@schema("meeting_room")
 }
 
 model Bidang {
@@ -42,6 +45,7 @@ model Bidang {
   bookings Booking[]
 
   @@map("bidang")
+  @@schema("meeting_room")
 }
 
 model Ruangan {
@@ -59,6 +63,7 @@ model Ruangan {
   bookings Booking[]
 
   @@map("ruangan")
+  @@schema("meeting_room")
 }
 
 model Booking {
@@ -122,6 +127,7 @@ model Booking {
   @@index([pemohonId])
   @@index([seriesId])
   @@map("bookings")
+  @@schema("meeting_room")
 }
 
 model AuditLog {
@@ -139,6 +145,7 @@ model AuditLog {
 
   @@index([bookingId])
   @@map("audit_logs")
+  @@schema("meeting_room")
 }
 
 model NomorSuratCounter {
@@ -150,4 +157,5 @@ model NomorSuratCounter {
 
   @@unique([tahun, bulan])
   @@map("nomor_surat_counter")
+  @@schema("meeting_room")
 }

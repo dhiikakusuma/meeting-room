@@ -1,8 +1,8 @@
 -- CreateSchema
-CREATE SCHEMA IF NOT EXISTS "public";
+CREATE SCHEMA IF NOT EXISTS "meeting_room";
 
 -- CreateTable
-CREATE TABLE "users" (
+CREATE TABLE "meeting_room"."users" (
     "id" TEXT NOT NULL,
     "namaLengkap" TEXT NOT NULL,
     "jabatan" TEXT,
@@ -16,7 +16,7 @@ CREATE TABLE "users" (
 );
 
 -- CreateTable
-CREATE TABLE "bidang" (
+CREATE TABLE "meeting_room"."bidang" (
     "id" TEXT NOT NULL,
     "nama" TEXT NOT NULL,
     "kode" TEXT,
@@ -29,7 +29,7 @@ CREATE TABLE "bidang" (
 );
 
 -- CreateTable
-CREATE TABLE "ruangan" (
+CREATE TABLE "meeting_room"."ruangan" (
     "id" TEXT NOT NULL,
     "nama" TEXT NOT NULL,
     "lantai" TEXT,
@@ -45,7 +45,7 @@ CREATE TABLE "ruangan" (
 );
 
 -- CreateTable
-CREATE TABLE "bookings" (
+CREATE TABLE "meeting_room"."bookings" (
     "id" TEXT NOT NULL,
     "nomorSurat" TEXT,
     "pemohonId" TEXT NOT NULL,
@@ -83,7 +83,7 @@ CREATE TABLE "bookings" (
 );
 
 -- CreateTable
-CREATE TABLE "audit_logs" (
+CREATE TABLE "meeting_room"."audit_logs" (
     "id" TEXT NOT NULL,
     "bookingId" TEXT,
     "userId" TEXT,
@@ -97,7 +97,7 @@ CREATE TABLE "audit_logs" (
 );
 
 -- CreateTable
-CREATE TABLE "nomor_surat_counter" (
+CREATE TABLE "meeting_room"."nomor_surat_counter" (
     "id" TEXT NOT NULL,
     "tahun" INTEGER NOT NULL,
     "bulan" INTEGER NOT NULL,
@@ -108,56 +108,55 @@ CREATE TABLE "nomor_surat_counter" (
 );
 
 -- CreateIndex
-CREATE INDEX "users_role_idx" ON "users"("role");
+CREATE INDEX "users_role_idx" ON "meeting_room"."users"("role");
 
 -- CreateIndex
-CREATE INDEX "users_namaLengkap_idx" ON "users"("namaLengkap");
+CREATE INDEX "users_namaLengkap_idx" ON "meeting_room"."users"("namaLengkap");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "bookings_nomorSurat_key" ON "bookings"("nomorSurat");
+CREATE UNIQUE INDEX "bookings_nomorSurat_key" ON "meeting_room"."bookings"("nomorSurat");
 
 -- CreateIndex
-CREATE INDEX "bookings_status_idx" ON "bookings"("status");
+CREATE INDEX "bookings_status_idx" ON "meeting_room"."bookings"("status");
 
 -- CreateIndex
-CREATE INDEX "bookings_tanggal_idx" ON "bookings"("tanggal");
+CREATE INDEX "bookings_tanggal_idx" ON "meeting_room"."bookings"("tanggal");
 
 -- CreateIndex
-CREATE INDEX "bookings_ruanganId_tanggal_idx" ON "bookings"("ruanganId", "tanggal");
+CREATE INDEX "bookings_ruanganId_tanggal_idx" ON "meeting_room"."bookings"("ruanganId", "tanggal");
 
 -- CreateIndex
-CREATE INDEX "bookings_pemohonId_idx" ON "bookings"("pemohonId");
+CREATE INDEX "bookings_pemohonId_idx" ON "meeting_room"."bookings"("pemohonId");
 
 -- CreateIndex
-CREATE INDEX "bookings_seriesId_idx" ON "bookings"("seriesId");
+CREATE INDEX "bookings_seriesId_idx" ON "meeting_room"."bookings"("seriesId");
 
 -- CreateIndex
-CREATE INDEX "audit_logs_bookingId_idx" ON "audit_logs"("bookingId");
+CREATE INDEX "audit_logs_bookingId_idx" ON "meeting_room"."audit_logs"("bookingId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "nomor_surat_counter_tahun_bulan_key" ON "nomor_surat_counter"("tahun", "bulan");
+CREATE UNIQUE INDEX "nomor_surat_counter_tahun_bulan_key" ON "meeting_room"."nomor_surat_counter"("tahun", "bulan");
 
 -- AddForeignKey
-ALTER TABLE "users" ADD CONSTRAINT "users_bidangId_fkey" FOREIGN KEY ("bidangId") REFERENCES "bidang"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE "meeting_room"."users" ADD CONSTRAINT "users_bidangId_fkey" FOREIGN KEY ("bidangId") REFERENCES "meeting_room"."bidang"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "bookings" ADD CONSTRAINT "bookings_pemohonId_fkey" FOREIGN KEY ("pemohonId") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "meeting_room"."bookings" ADD CONSTRAINT "bookings_pemohonId_fkey" FOREIGN KEY ("pemohonId") REFERENCES "meeting_room"."users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "bookings" ADD CONSTRAINT "bookings_bidangId_fkey" FOREIGN KEY ("bidangId") REFERENCES "bidang"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE "meeting_room"."bookings" ADD CONSTRAINT "bookings_bidangId_fkey" FOREIGN KEY ("bidangId") REFERENCES "meeting_room"."bidang"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "bookings" ADD CONSTRAINT "bookings_ruanganId_fkey" FOREIGN KEY ("ruanganId") REFERENCES "ruangan"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "meeting_room"."bookings" ADD CONSTRAINT "bookings_ruanganId_fkey" FOREIGN KEY ("ruanganId") REFERENCES "meeting_room"."ruangan"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "bookings" ADD CONSTRAINT "bookings_adminId_fkey" FOREIGN KEY ("adminId") REFERENCES "users"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE "meeting_room"."bookings" ADD CONSTRAINT "bookings_adminId_fkey" FOREIGN KEY ("adminId") REFERENCES "meeting_room"."users"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "bookings" ADD CONSTRAINT "bookings_atasanId_fkey" FOREIGN KEY ("atasanId") REFERENCES "users"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE "meeting_room"."bookings" ADD CONSTRAINT "bookings_atasanId_fkey" FOREIGN KEY ("atasanId") REFERENCES "meeting_room"."users"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "audit_logs" ADD CONSTRAINT "audit_logs_bookingId_fkey" FOREIGN KEY ("bookingId") REFERENCES "bookings"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "meeting_room"."audit_logs" ADD CONSTRAINT "audit_logs_bookingId_fkey" FOREIGN KEY ("bookingId") REFERENCES "meeting_room"."bookings"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "audit_logs" ADD CONSTRAINT "audit_logs_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE SET NULL ON UPDATE CASCADE;
-
+ALTER TABLE "meeting_room"."audit_logs" ADD CONSTRAINT "audit_logs_userId_fkey" FOREIGN KEY ("userId") REFERENCES "meeting_room"."users"("id") ON DELETE SET NULL ON UPDATE CASCADE;
