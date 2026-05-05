@@ -1,5 +1,6 @@
 import { cookies } from "next/headers";
 import crypto from "crypto";
+import { cache } from "react";
 import { prisma } from "./prisma";
 
 const SESSION_COOKIE = "mr_session";
@@ -67,7 +68,9 @@ export async function clearSession() {
   jar.delete(SESSION_COOKIE);
 }
 
-export async function getSessionUser(): Promise<SessionUser | null> {
+// React `cache` dedupes calls within a single request render so layout and
+// page can both call getSessionUser() without firing two DB roundtrips.
+export const getSessionUser = cache(async (): Promise<SessionUser | null> => {
   const jar = await cookies();
   const raw = jar.get(SESSION_COOKIE)?.value;
   const id = unpack(raw);
@@ -84,7 +87,7 @@ export async function getSessionUser(): Promise<SessionUser | null> {
     },
   });
   return user;
-}
+});
 
 export async function requireRole(role: Role | Role[]) {
   const user = await getSessionUser();
