@@ -34,7 +34,13 @@ type Booked = {
 
 const FASILITAS_OPSI = ["Proyektor", "AC", "Whiteboard", "Sound System", "WiFi", "Snack", "Konsumsi"];
 
-export function BookingForm({ ruangan }: { ruangan: Ruangan[] }) {
+export function BookingForm({
+  ruangan,
+  pemohonNama,
+}: {
+  ruangan: Ruangan[];
+  pemohonNama: string;
+}) {
   const router = useRouter();
   const today = formatDateInput(new Date());
 
@@ -351,7 +357,8 @@ export function BookingForm({ ruangan }: { ruangan: Ruangan[] }) {
         <SignaturePad
           ref={signatureRef}
           label="Tanda tangan pemohon"
-          hint="Tanda tangani di atas menggunakan mouse, trackpad, atau jari pada layar sentuh."
+          hint="Ketik nama lengkap di atas — sistem akan otomatis merender sebagai tanda tangan."
+          defaultName={pemohonNama}
           onChange={setPemohonTtdUrl}
         />
       </div>

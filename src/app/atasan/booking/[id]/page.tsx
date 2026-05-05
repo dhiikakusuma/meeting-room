@@ -1,14 +1,17 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { BookingDetail } from "@/components/booking-detail";
+import { requireRole } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
 type Ctx = { params: Promise<{ id: string }> };
 
 export default async function AtasanBookingDetailPage({ params }: Ctx) {
+  const me = await requireRole("atasan");
+  if (!me) redirect("/login/atasan");
   const { id } = await params;
   const booking = await prisma.booking.findUnique({
     where: { id },
@@ -28,7 +31,7 @@ export default async function AtasanBookingDetailPage({ params }: Ctx) {
         <ArrowLeft className="h-3.5 w-3.5" />
         Kembali
       </Link>
-      <BookingDetail booking={booking} role="atasan" />
+      <BookingDetail booking={booking} role="atasan" currentUserName={me.namaLengkap} />
     </div>
   );
 }

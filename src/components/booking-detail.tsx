@@ -57,9 +57,11 @@ type Role = "pemohon" | "admin" | "atasan";
 export function BookingDetail({
   booking,
   role,
+  currentUserName,
 }: {
   booking: BookingDetailData;
   role: Role;
+  currentUserName?: string;
 }) {
   const router = useRouter();
   const [catatan, setCatatan] = useState("");
@@ -291,7 +293,8 @@ export function BookingDetail({
             <SignaturePad
               ref={atasanSigRef}
               label="Tanda tangan atasan"
-              hint="Wajib ditandatangani sebelum surat resmi diterbitkan."
+              hint="Ketik nama lengkap — sistem otomatis merender sebagai tanda tangan."
+              defaultName={currentUserName}
               onChange={setAtasanTtdUrl}
             />
           )}

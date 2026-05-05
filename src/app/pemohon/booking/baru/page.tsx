@@ -1,11 +1,15 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { BookingForm } from "@/components/booking-form";
+import { requireRole } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
 export default async function BookingBaruPage() {
+  const me = await requireRole("pemohon");
+  if (!me) redirect("/login/pemohon");
   const ruangan = await prisma.ruangan.findMany({
     where: { aktif: true },
     orderBy: [{ urutan: "asc" }, { nama: "asc" }],
@@ -32,7 +36,7 @@ export default async function BookingBaruPage() {
         Lengkapi formulir di bawah. Pastikan jam tidak bentrok dengan booking yang sudah disetujui.
       </p>
       <div className="divider-gold my-6" />
-      <BookingForm ruangan={ruangan} />
+      <BookingForm ruangan={ruangan} pemohonNama={me.namaLengkap} />
     </div>
   );
 }

@@ -1,7 +1,6 @@
 "use client";
 
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react";
-import SignaturePadLib from "signature_pad";
 import { Eraser } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -15,74 +14,89 @@ type Props = {
   label?: string;
   hint?: string;
   className?: string;
-  /** Called whenever the user finishes a stroke. Receives the data URL or null if empty. */
+  /** Initial / default name — used for atasan whose name is known from session. */
+  defaultName?: string;
+  /** Read-only name input (e.g. when name comes from session). */
+  nameLocked?: boolean;
+  /** Called whenever the rendered signature changes. Receives the data URL or null if empty. */
   onChange?: (dataUrl: string | null) => void;
 };
 
+const CANVAS_W = 480;
+const CANVAS_H = 140;
+
+function renderSignatureToCanvas(canvas: HTMLCanvasElement, name: string) {
+  const ratio = Math.max(window.devicePixelRatio || 1, 1);
+  canvas.width = CANVAS_W * ratio;
+  canvas.height = CANVAS_H * ratio;
+  canvas.style.width = `${CANVAS_W}px`;
+  canvas.style.height = `${CANVAS_H}px`;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return;
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.scale(ratio, ratio);
+  ctx.clearRect(0, 0, CANVAS_W, CANVAS_H);
+  ctx.fillStyle = "#ffffff";
+  ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+
+  const trimmed = name.trim();
+  if (!trimmed) return;
+
+  // Auto-fit font size: try 64, scale down if name is too wide.
+  let fontSize = 64;
+  ctx.fillStyle = "#0f172a";
+  ctx.textBaseline = "middle";
+  ctx.textAlign = "center";
+  // Caveat is loaded via next/font and exposed as --font-caveat
+  const fontFamily = `"Caveat", "Brush Script MT", cursive`;
+  for (; fontSize >= 28; fontSize -= 2) {
+    ctx.font = `600 ${fontSize}px ${fontFamily}`;
+    if (ctx.measureText(trimmed).width <= CANVAS_W - 40) break;
+  }
+  ctx.font = `600 ${fontSize}px ${fontFamily}`;
+  ctx.fillText(trimmed, CANVAS_W / 2, CANVAS_H / 2 + 4);
+}
+
 export const SignaturePad = forwardRef<SignaturePadHandle, Props>(function SignaturePad(
-  { label, hint, className, onChange },
+  { label, hint, className, defaultName, nameLocked, onChange },
   ref,
 ) {
-  const wrapRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const padRef = useRef<SignaturePadLib | null>(null);
-  const [empty, setEmpty] = useState(true);
+  const [name, setName] = useState(defaultName ?? "");
+  const empty = name.trim().length === 0;
 
-  // Resize canvas to match container width while preserving HiDPI quality.
   useEffect(() => {
-    const wrap = wrapRef.current;
     const canvas = canvasRef.current;
-    if (!wrap || !canvas) return;
-
-    const resize = () => {
-      const ratio = Math.max(window.devicePixelRatio || 1, 1);
-      const width = wrap.clientWidth;
-      const height = 180;
-      canvas.width = width * ratio;
-      canvas.height = height * ratio;
-      canvas.style.width = `${width}px`;
-      canvas.style.height = `${height}px`;
-      const ctx = canvas.getContext("2d");
-      ctx?.scale(ratio, ratio);
-      // Re-init pad after resize (clears existing strokes — which is fine on mount)
-      if (!padRef.current) {
-        padRef.current = new SignaturePadLib(canvas, {
-          backgroundColor: "rgba(255,255,255,1)",
-          penColor: "#0f172a",
-          minWidth: 0.6,
-          maxWidth: 1.8,
-        });
-        padRef.current.addEventListener("endStroke", () => {
-          const isEmpty = padRef.current?.isEmpty() ?? true;
-          setEmpty(isEmpty);
-          onChange?.(isEmpty ? null : padRef.current!.toDataURL("image/png"));
-        });
-      } else {
-        padRef.current.clear();
-        setEmpty(true);
-        onChange?.(null);
-      }
+    if (!canvas) return;
+    let cancelled = false;
+    const draw = () => {
+      if (cancelled || !canvasRef.current) return;
+      renderSignatureToCanvas(canvasRef.current, name);
+      onChange?.(empty ? null : canvasRef.current.toDataURL("image/png"));
     };
-
-    resize();
-    const observer = new ResizeObserver(resize);
-    observer.observe(wrap);
-    return () => observer.disconnect();
+    // Wait for fonts to be ready so canvas uses the loaded Caveat font, not a fallback.
+    if (typeof document !== "undefined" && "fonts" in document) {
+      document.fonts.ready.then(draw).catch(draw);
+    } else {
+      draw();
+    }
+    return () => {
+      cancelled = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [name]);
 
   useImperativeHandle(
     ref,
     () => ({
-      isEmpty: () => padRef.current?.isEmpty() ?? true,
+      isEmpty: () => empty,
       clear: () => {
-        padRef.current?.clear();
-        setEmpty(true);
-        onChange?.(null);
+        setName(nameLocked ? (defaultName ?? "") : "");
       },
-      toDataURL: () => padRef.current?.toDataURL("image/png") ?? "",
+      toDataURL: () =>
+        canvasRef.current && !empty ? canvasRef.current.toDataURL("image/png") : "",
     }),
-    [onChange],
+    [empty, defaultName, nameLocked],
   );
 
   return (
@@ -92,31 +106,38 @@ export const SignaturePad = forwardRef<SignaturePadHandle, Props>(function Signa
           <p className="text-[11px] tracking-[0.14em] uppercase serif text-gold-700">
             {label}
           </p>
-          <button
-            type="button"
-            onClick={() => {
-              padRef.current?.clear();
-              setEmpty(true);
-              onChange?.(null);
-            }}
-            className="inline-flex items-center gap-1 text-[11px] text-ink-500 hover:text-ink-900"
-          >
-            <Eraser className="h-3 w-3" />
-            Bersihkan
-          </button>
+          {!nameLocked && (
+            <button
+              type="button"
+              onClick={() => setName("")}
+              className="inline-flex items-center gap-1 text-[11px] text-ink-500 hover:text-ink-900"
+            >
+              <Eraser className="h-3 w-3" />
+              Bersihkan
+            </button>
+          )}
         </div>
       )}
-      <div
-        ref={wrapRef}
-        className="relative rounded-xl border border-ink-200 bg-white overflow-hidden"
-      >
-        <canvas ref={canvasRef} className="touch-none block w-full" />
-        {empty && (
-          <p className="pointer-events-none absolute inset-0 flex items-center justify-center text-[12px] text-ink-400 italic serif">
-            Tanda tangan di sini
-          </p>
+      <input
+        type="text"
+        value={name}
+        onChange={(e) => setName(e.target.value)}
+        readOnly={nameLocked}
+        placeholder="Ketik nama lengkap"
+        className={cn(
+          "w-full rounded-lg border border-ink-200 bg-white px-3 py-2 text-sm",
+          "focus:outline-none focus:ring-2 focus:ring-gold-300 focus:border-gold-400",
+          nameLocked && "bg-ink-50 text-ink-700 cursor-not-allowed",
         )}
+      />
+      <div className="rounded-xl border border-ink-200 bg-white overflow-hidden flex justify-center">
+        <canvas ref={canvasRef} className="block" />
       </div>
+      {empty && (
+        <p className="text-[11px] text-ink-400 italic">
+          Ketik nama untuk menghasilkan tanda tangan otomatis.
+        </p>
+      )}
       {hint && <p className="text-[11px] text-ink-500">{hint}</p>}
     </div>
   );
