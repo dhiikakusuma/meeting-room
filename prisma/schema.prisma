@@ -1,8 +1,7 @@
 // Booking Ruang Rapat — DP3AKB Kota Balikpapan
 
 generator client {
-  provider        = "prisma-client-js"
-  previewFeatures = ["multiSchema"]
+  provider = "prisma-client-js"
 }
 
 datasource db {
