@@ -15,6 +15,7 @@ import {
   Menu,
   PlusCircle,
   Building2,
+  Settings,
   X,
 } from "lucide-react";
 import { Logo } from "./logo";
@@ -46,6 +47,7 @@ const NAV_CONFIG: Record<"pemohon" | "admin" | "atasan", NavItem[]> = {
     { href: "/atasan", label: "Dashboard", icon: LayoutDashboard },
     { href: "/atasan/booking", label: "Inbox Persetujuan", icon: ClipboardList },
     { href: "/atasan/riwayat", label: "Riwayat", icon: History },
+    { href: "/atasan/pengaturan", label: "Pengaturan", icon: Settings },
   ],
 };
 

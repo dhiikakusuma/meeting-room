@@ -336,8 +336,8 @@ export function BookingDetail({
         </div>
       )}
 
-      {/* Pemohon actions */}
-      {role === "pemohon" && (
+      {/* Footer actions (cancel/download) */}
+      {(canCancel || canDownload) && (
         <div className="flex flex-wrap gap-2 justify-end">
           {canCancel && (
             <Button variant="ghost" onClick={() => setConfirmCancel(true)}>
@@ -348,7 +348,7 @@ export function BookingDetail({
             <Button variant="gold" asChild>
               <a href={`/api/booking/${booking.id}/pdf`} target="_blank" rel="noreferrer">
                 <Download className="h-4 w-4" />
-                Unduh Surat PDF
+                Cetak / Unduh Surat PDF
               </a>
             </Button>
           )}
