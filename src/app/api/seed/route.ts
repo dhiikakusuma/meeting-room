@@ -90,26 +90,11 @@ async function runSeed() {
     created.admin = 1;
   }
 
-  // Seed atasan
-  const atasan = await prisma.user.findFirst({ where: { role: "atasan" } });
-  if (!atasan) {
-    await prisma.user.create({
-      data: {
-        namaLengkap: "Kepala Dinas DP3AKB",
-        jabatan: "KEPALA DINAS",
-        role: "atasan",
-        passwordHash: await bcrypt.hash("atasan123", 10),
-      },
-    });
-    created.atasan = 1;
-  }
-
   return NextResponse.json({
     ok: true,
     created,
     info: {
       admin: { login: "/login/admin" },
-      atasan: { login: "/login/atasan" },
       note: "Default credentials only ada di dokumentasi internal — tidak dikembalikan oleh API.",
     },
   });

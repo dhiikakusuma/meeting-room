@@ -4,9 +4,9 @@ import { ProfileForm } from "@/components/profile-form";
 
 export const dynamic = "force-dynamic";
 
-export default async function AtasanPengaturanPage() {
-  const me = await requireRole("atasan");
-  if (!me) redirect("/login/atasan");
+export default async function AdminPengaturanPage() {
+  const me = await requireRole("admin");
+  if (!me) redirect("/login/admin");
 
   return (
     <div className="max-w-2xl mx-auto">

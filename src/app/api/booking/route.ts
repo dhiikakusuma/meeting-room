@@ -41,9 +41,6 @@ export async function GET(req: Request) {
 
   if (me.role === "pemohon") {
     where.pemohonId = me.id;
-  } else if (me.role === "atasan") {
-    // Atasan default lihat semua yang menunggu atasan + sudah disetujui (history)
-    if (!status) where.status = { in: ["MENUNGGU_ATASAN", "DISETUJUI", "DITOLAK_ATASAN"] };
   }
   if (status) where.status = status;
   if (ruanganId) where.ruanganId = ruanganId;

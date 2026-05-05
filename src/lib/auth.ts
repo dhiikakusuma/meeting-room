@@ -5,7 +5,7 @@ import { prisma } from "./prisma";
 
 const SESSION_COOKIE = "mr_session";
 
-export type Role = "pemohon" | "admin" | "atasan";
+export type Role = "pemohon" | "admin";
 
 export type SessionUser = {
   id: string;

@@ -5,7 +5,6 @@ import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import {
   CalendarRange,
-  ClipboardList,
   DoorOpen,
   FileSpreadsheet,
   History,
@@ -27,7 +26,7 @@ type NavItem = {
   icon: React.ComponentType<{ className?: string }>;
 };
 
-const NAV_CONFIG: Record<"pemohon" | "admin" | "atasan", NavItem[]> = {
+const NAV_CONFIG: Record<"pemohon" | "admin", NavItem[]> = {
   pemohon: [
     { href: "/pemohon", label: "Dashboard", icon: LayoutDashboard },
     { href: "/pemohon/booking/baru", label: "Booking Baru", icon: PlusCircle },
@@ -42,17 +41,12 @@ const NAV_CONFIG: Record<"pemohon" | "admin" | "atasan", NavItem[]> = {
     { href: "/admin/ruangan", label: "Kelola Ruangan", icon: DoorOpen },
     { href: "/admin/bidang", label: "Kelola Bidang", icon: Building2 },
     { href: "/admin/export", label: "Export Excel", icon: FileSpreadsheet },
-  ],
-  atasan: [
-    { href: "/atasan", label: "Dashboard", icon: LayoutDashboard },
-    { href: "/atasan/booking", label: "Inbox Persetujuan", icon: ClipboardList },
-    { href: "/atasan/riwayat", label: "Riwayat", icon: History },
-    { href: "/atasan/pengaturan", label: "Pengaturan", icon: Settings },
+    { href: "/admin/pengaturan", label: "Pengaturan", icon: Settings },
   ],
 };
 
 type Props = {
-  role: "pemohon" | "admin" | "atasan";
+  role: "pemohon" | "admin";
   user: { namaLengkap: string; jabatan: string | null; bidang: { nama: string } | null };
   children: React.ReactNode;
 };
@@ -60,7 +54,6 @@ type Props = {
 const ROLE_LABEL: Record<string, string> = {
   pemohon: "Pemohon",
   admin: "Admin Ruangan",
-  atasan: "Atasan",
 };
 
 export function AppShell({ role, user, children }: Props) {

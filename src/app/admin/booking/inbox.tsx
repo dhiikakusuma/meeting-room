@@ -1,14 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Check, ChevronRight, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { EmptyState } from "@/components/empty-state";
-import { ConfirmDialog } from "@/components/confirm-dialog";
 import { toast } from "@/components/ui/toast";
+import { SignaturePad, type SignaturePadHandle } from "@/components/ui/signature-pad";
 import { formatTanggal } from "@/lib/datetime";
 
 type Item = {
@@ -24,11 +24,19 @@ type Item = {
   createdAt: string;
 };
 
-export function BookingInboxAdmin({ items }: { items: Item[] }) {
+export function BookingInboxAdmin({
+  items,
+  currentUserName,
+}: {
+  items: Item[];
+  currentUserName?: string;
+}) {
   const router = useRouter();
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [bulkAction, setBulkAction] = useState<null | "APPROVE" | "REJECT">(null);
   const [bulkCatatan, setBulkCatatan] = useState("");
+  const [bulkTtdUrl, setBulkTtdUrl] = useState<string | null>(null);
+  const bulkSigRef = useRef<SignaturePadHandle>(null);
   const [busy, setBusy] = useState(false);
 
   if (items.length === 0) {
@@ -55,6 +63,14 @@ export function BookingInboxAdmin({ items }: { items: Item[] }) {
 
   async function executeBulk() {
     if (!bulkAction || selected.size === 0) return;
+    let ttd: string | null = null;
+    if (bulkAction === "APPROVE") {
+      ttd = bulkTtdUrl ?? bulkSigRef.current?.toDataURL() ?? null;
+      if (!ttd || bulkSigRef.current?.isEmpty()) {
+        toast.error("Tanda tangan admin wajib untuk persetujuan massal");
+        return;
+      }
+    }
     setBusy(true);
     const res = await fetch("/api/booking/bulk", {
       method: "POST",
@@ -63,6 +79,7 @@ export function BookingInboxAdmin({ items }: { items: Item[] }) {
         ids: Array.from(selected),
         action: bulkAction,
         catatan: bulkCatatan.trim() || null,
+        adminTtdUrl: ttd,
       }),
     });
     const data = await res.json();
@@ -79,6 +96,7 @@ export function BookingInboxAdmin({ items }: { items: Item[] }) {
     setSelected(new Set());
     setBulkAction(null);
     setBulkCatatan("");
+    setBulkTtdUrl(null);
     setBusy(false);
     router.refresh();
   }
@@ -152,19 +170,60 @@ export function BookingInboxAdmin({ items }: { items: Item[] }) {
         })}
       </div>
 
-      <ConfirmDialog
-        open={bulkAction === "APPROVE"}
-        onOpenChange={(o) => {
-          if (!o) {
-            setBulkAction(null);
-            setBulkCatatan("");
-          }
-        }}
-        title="Setujui pengajuan terpilih?"
-        description={`${selected.size} pengajuan akan diteruskan ke atasan untuk persetujuan akhir.`}
-        confirmText={busy ? "Memproses…" : "Ya, teruskan"}
-        onConfirm={executeBulk}
-      />
+      {bulkAction === "APPROVE" && (
+        <div
+          className="fixed inset-0 z-40 flex items-end sm:items-center justify-center bg-ink-900/40 p-4"
+          onClick={() => {
+            if (!busy) {
+              setBulkAction(null);
+              setBulkCatatan("");
+              setBulkTtdUrl(null);
+            }
+          }}
+        >
+          <div
+            className="w-full max-w-md rounded-2xl bg-white border border-ink-100 shadow-xl p-5 space-y-3"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <p className="serif text-base font-semibold text-ink-900">
+              Setujui {selected.size} pengajuan?
+            </p>
+            <p className="text-[12px] text-ink-500">
+              Surat resmi akan langsung terbit untuk semua booking terpilih dengan tanda tangan Anda di bawah ini.
+            </p>
+            <SignaturePad
+              ref={bulkSigRef}
+              label="Tanda tangan admin"
+              hint="Ketik nama lengkap — dipakai untuk semua pengajuan terpilih."
+              defaultName={currentUserName}
+              onChange={setBulkTtdUrl}
+            />
+            <Textarea
+              value={bulkCatatan}
+              onChange={(e) => setBulkCatatan(e.target.value)}
+              rows={2}
+              placeholder="Catatan (opsional)"
+            />
+            <div className="flex justify-end gap-2 pt-1">
+              <Button
+                variant="ghost"
+                size="sm"
+                disabled={busy}
+                onClick={() => {
+                  setBulkAction(null);
+                  setBulkCatatan("");
+                  setBulkTtdUrl(null);
+                }}
+              >
+                Batal
+              </Button>
+              <Button variant="gold" size="sm" disabled={busy} onClick={executeBulk}>
+                {busy ? "Memproses…" : `Setujui & terbitkan surat`}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {bulkAction === "REJECT" && (
         <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-30 w-[92vw] max-w-md">

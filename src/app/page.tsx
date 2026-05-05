@@ -8,7 +8,6 @@ export default async function LandingPage() {
   const session = await getSessionUser();
   if (session?.role === "pemohon") redirect("/pemohon");
   if (session?.role === "admin") redirect("/admin");
-  if (session?.role === "atasan") redirect("/atasan");
 
   return (
     <div className="min-h-screen bg-cream-50 flex flex-col">
@@ -48,16 +47,11 @@ export default async function LandingPage() {
               <ArrowRight className="h-4 w-4" />
             </Link>
           </Button>
-          <div className="grid grid-cols-2 gap-3">
-            <Button asChild variant="ghost" size="default">
-              <Link href="/login/admin">Admin</Link>
-            </Button>
-            <Button asChild variant="ghost" size="default">
-              <Link href="/login/atasan">Atasan</Link>
-            </Button>
-          </div>
+          <Button asChild variant="ghost" size="default" className="w-full">
+            <Link href="/login/admin">Masuk sebagai Admin</Link>
+          </Button>
           <p className="text-[11px] text-ink-500 text-center pt-3">
-            Pemohon hanya butuh nama · Admin & Atasan dengan password
+            Pemohon hanya butuh nama · Admin masuk dengan password
           </p>
         </div>
 
@@ -69,13 +63,13 @@ export default async function LandingPage() {
           />
           <Feature
             icon={<ShieldCheck className="h-4 w-4" />}
-            title="Disetujui berlapis"
-            text="Admin memverifikasi, atasan menyetujui — anti double-booking."
+            title="Verifikasi admin"
+            text="Admin memverifikasi & menandatangani — anti double-booking."
           />
           <Feature
             icon={<Users className="h-4 w-4" />}
             title="Surat resmi PDF"
-            text="Unduh surat dengan nomor & QR code untuk verifikasi di hari-H."
+            text="Unduh surat resmi dengan nomor & tanda tangan pemohon dan admin."
           />
         </div>
       </section>

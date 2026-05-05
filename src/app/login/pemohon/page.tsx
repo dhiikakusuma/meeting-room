@@ -52,10 +52,6 @@ export default async function LoginPemohonPage() {
             Bukan pemohon?{" "}
             <Link href="/login/admin" className="text-gold-700 hover:underline">
               Masuk Admin
-            </Link>{" "}
-            atau{" "}
-            <Link href="/login/atasan" className="text-gold-700 hover:underline">
-              Atasan
             </Link>
           </p>
         </div>

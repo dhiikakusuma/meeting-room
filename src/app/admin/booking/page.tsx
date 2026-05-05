@@ -1,11 +1,18 @@
+import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { requireRole } from "@/lib/auth";
 import { BookingInboxAdmin } from "./inbox";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminInboxPage() {
+  const me = await requireRole("admin");
+  if (!me) redirect("/login/admin");
+
   const items = await prisma.booking.findMany({
-    where: { status: "MENUNGGU_ADMIN" },
+    // Admin sebagai approver final melihat semua antrian (termasuk MENUNGGU_ATASAN
+    // legacy) di satu inbox.
+    where: { status: { in: ["MENUNGGU_ADMIN", "MENUNGGU_ATASAN"] } },
     orderBy: { createdAt: "asc" },
     include: { ruangan: { select: { nama: true } } },
   });
@@ -17,6 +24,7 @@ export default async function AdminInboxPage() {
       </p>
       <div className="mt-5">
         <BookingInboxAdmin
+          currentUserName={me.namaLengkap}
           items={items.map((b) => ({
             id: b.id,
             agenda: b.agenda,

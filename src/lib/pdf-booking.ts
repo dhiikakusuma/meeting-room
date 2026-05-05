@@ -99,7 +99,7 @@ export async function generateBookingPdf(data: BookingPdfData): Promise<Buffer> 
     detailRows.push(["Kebutuhan Tambahan", data.kebutuhan.join(", ")]);
   }
   if (data.catatanAdmin) detailRows.push(["Catatan Admin", data.catatanAdmin]);
-  if (data.catatanAtasan) detailRows.push(["Catatan Atasan", data.catatanAtasan]);
+  if (data.catatanAtasan) detailRows.push(["Catatan Tambahan", data.catatanAtasan]);
 
   autoTable(doc, {
     startY: y,
@@ -142,34 +142,44 @@ export async function generateBookingPdf(data: BookingPdfData): Promise<Buffer> 
   );
   y += 28;
 
-  // Tanda tangan section: Pemohon (kiri) & Atasan (kanan)
+  // Tanda tangan section: Pemohon (kiri) & Admin (kanan), keduanya
+  // di-center dalam kolom masing-masing supaya nama & tanda tangan sejajar
+  // secara visual walaupun panjang nama berbeda.
   const tanggalSurat = data.approvedAtasanAt ?? new Date();
   const innerWidth = pageWidth - margin * 2;
   const colWidth = innerWidth / 2;
-  const leftX = margin;
-  const rightX = margin + colWidth;
+  const leftCenterX = margin + colWidth / 2;
+  const rightCenterX = margin + colWidth + colWidth / 2;
   const sigBoxWidth = 180;
   const sigBoxHeight = 64;
+  const lineHeight = 14;
 
-  // Heading kanan: "Balikpapan, <tanggal>" + jabatan atasan
   doc.setFont("helvetica", "normal");
   doc.setFontSize(10.5);
   doc.setTextColor(...INK);
-  doc.text(`Balikpapan, ${formatTanggalLong(tanggalSurat)}`, rightX, y);
-  doc.text(data.atasanJabatan || "Kepala Dinas", rightX, y + 14);
 
-  // Heading kiri: "Pemohon"
-  doc.text("Pemohon,", leftX, y);
+  // Header — kedua sisi punya 2 baris supaya signature & nama di bawahnya sejajar.
+  // Kiri:  (kosong) + "Pemohon,"
+  // Kanan: "Balikpapan, <tgl>" + jabatan
+  const headerY1 = y;
+  const headerY2 = y + lineHeight;
 
-  const sigYStart = y + 22;
+  doc.text("Pemohon,", leftCenterX, headerY2, { align: "center" });
+  doc.text(`Balikpapan, ${formatTanggalLong(tanggalSurat)}`, rightCenterX, headerY1, {
+    align: "center",
+  });
+  doc.text(data.atasanJabatan || "Admin Ruangan", rightCenterX, headerY2, {
+    align: "center",
+  });
 
-  // Render gambar tanda tangan jika ada
+  const sigYStart = headerY2 + 10;
+
   if (data.pemohonTtdUrl) {
     try {
       doc.addImage(
         data.pemohonTtdUrl,
         "PNG",
-        leftX,
+        leftCenterX - sigBoxWidth / 2,
         sigYStart,
         sigBoxWidth,
         sigBoxHeight,
@@ -183,7 +193,7 @@ export async function generateBookingPdf(data: BookingPdfData): Promise<Buffer> 
       doc.addImage(
         data.atasanTtdUrl,
         "PNG",
-        rightX,
+        rightCenterX - sigBoxWidth / 2,
         sigYStart,
         sigBoxWidth,
         sigBoxHeight,
@@ -193,12 +203,12 @@ export async function generateBookingPdf(data: BookingPdfData): Promise<Buffer> 
     }
   }
 
-  // Garis tanda tangan + nama
-  const nameY = sigYStart + sigBoxHeight + 4;
+  // Nama — bold, ditengah kolom, di-y yang sama sehingga sejajar.
+  const nameY = sigYStart + sigBoxHeight + 6;
   doc.setFont("helvetica", "bold");
   doc.setTextColor(...INK);
-  doc.text(`( ${data.pemohonNama} )`, leftX, nameY);
-  doc.text(`( ${data.atasanNama ?? "-"} )`, rightX, nameY);
+  doc.text(`( ${data.pemohonNama} )`, leftCenterX, nameY, { align: "center" });
+  doc.text(`( ${data.atasanNama ?? "-"} )`, rightCenterX, nameY, { align: "center" });
   doc.setFont("helvetica", "normal");
 
   // Footer note

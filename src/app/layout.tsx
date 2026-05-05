@@ -24,7 +24,7 @@ const caveat = Caveat({
 export const metadata: Metadata = {
   title: "Booking Ruang Rapat · DP3AKB Kota Balikpapan",
   description:
-    "Sistem booking ruang rapat resmi DP3AKB Kota Balikpapan. Ajukan, disetujui oleh admin & atasan, lalu unduh surat resmi PDF — semua dari satu layar.",
+    "Sistem booking ruang rapat resmi DP3AKB Kota Balikpapan. Ajukan, disetujui oleh admin, lalu unduh surat resmi PDF — semua dari satu layar.",
 };
 
 export default function RootLayout({

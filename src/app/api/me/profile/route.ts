@@ -12,9 +12,9 @@ export async function PATCH(req: Request) {
   const me = await getSessionUser();
   if (!me) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  // For now we only allow atasan to edit their own profile here. Admin and pemohon
-  // edit flows can be added later if needed.
-  if (me.role !== "atasan") {
+  // Hanya admin yang bisa edit profil di endpoint ini. Nama & jabatan
+  // ditampilkan di blok tanda tangan kanan PDF saat admin menyetujui booking.
+  if (me.role !== "admin") {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 

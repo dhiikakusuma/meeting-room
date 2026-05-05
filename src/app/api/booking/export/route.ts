@@ -6,7 +6,7 @@ import { formatTanggal } from "@/lib/datetime";
 import { STATUS_LABELS } from "@/lib/booking-rules";
 
 export async function GET(req: Request) {
-  const me = await requireRole(["admin", "atasan"]);
+  const me = await requireRole("admin");
   if (!me) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   const url = new URL(req.url);

@@ -14,7 +14,7 @@ type Props = {
   label?: string;
   hint?: string;
   className?: string;
-  /** Initial / default name — used for atasan whose name is known from session. */
+  /** Initial / default name — used when name is known from session. */
   defaultName?: string;
   /** Read-only name input (e.g. when name comes from session). */
   nameLocked?: boolean;

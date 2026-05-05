@@ -52,7 +52,7 @@ export type BookingDetailData = {
   }>;
 };
 
-type Role = "pemohon" | "admin" | "atasan";
+type Role = "pemohon" | "admin";
 
 export function BookingDetail({
   booking,
@@ -67,8 +67,8 @@ export function BookingDetail({
   const [catatan, setCatatan] = useState("");
   const [busy, setBusy] = useState(false);
   const [confirmCancel, setConfirmCancel] = useState(false);
-  const atasanSigRef = useRef<SignaturePadHandle>(null);
-  const [atasanTtdUrl, setAtasanTtdUrl] = useState<string | null>(null);
+  const adminSigRef = useRef<SignaturePadHandle>(null);
+  const [adminTtdUrl, setAdminTtdUrl] = useState<string | null>(null);
 
   const tanggalDate = new Date(booking.tanggal);
   const canCancel =
@@ -76,31 +76,28 @@ export function BookingDetail({
     (booking.status === "MENUNGGU_ADMIN" || booking.status === "MENUNGGU_ATASAN");
   const canDownload = booking.status === "DISETUJUI" && booking.nomorSurat;
 
-  const adminCanAct = role === "admin" && booking.status === "MENUNGGU_ADMIN";
-  const atasanCanAct = role === "atasan" && booking.status === "MENUNGGU_ATASAN";
+  // Admin sekarang menjadi approver final: status MENUNGGU_ADMIN -> DISETUJUI
+  // langsung. Booking lama yang masih MENUNGGU_ATASAN juga bisa diselesaikan
+  // oleh admin di sini.
+  const adminCanAct =
+    role === "admin" &&
+    (booking.status === "MENUNGGU_ADMIN" || booking.status === "MENUNGGU_ATASAN");
 
   async function approve() {
-    const isAtasan = role === "atasan";
-    let ttd: string | null = null;
-    if (isAtasan) {
-      ttd = atasanTtdUrl ?? atasanSigRef.current?.toDataURL() ?? null;
-      if (!ttd || atasanSigRef.current?.isEmpty()) {
-        toast.error("Tanda tangan atasan wajib diisi");
-        return;
-      }
+    if (role !== "admin") return;
+    const ttd = adminTtdUrl ?? adminSigRef.current?.toDataURL() ?? null;
+    if (!ttd || adminSigRef.current?.isEmpty()) {
+      toast.error("Tanda tangan admin wajib diisi");
+      return;
     }
     setBusy(true);
-    const url = role === "admin"
-      ? `/api/booking/${booking.id}/approve-admin`
-      : `/api/booking/${booking.id}/approve-atasan`;
-    const payload: Record<string, unknown> = {
-      catatan: catatan.trim() || null,
-    };
-    if (isAtasan) payload.atasanTtdUrl = ttd;
-    const res = await fetch(url, {
+    const res = await fetch(`/api/booking/${booking.id}/approve-admin`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
+      body: JSON.stringify({
+        catatan: catatan.trim() || null,
+        adminTtdUrl: ttd,
+      }),
     });
     const data = await res.json();
     if (!res.ok) {
@@ -151,35 +148,18 @@ export function BookingDetail({
       at: booking.createdAt,
     },
     {
-      label: "Disetujui Admin",
+      label: "Disetujui Admin & Surat Diterbitkan",
       status:
-        booking.status === "MENUNGGU_ADMIN"
+        booking.status === "MENUNGGU_ADMIN" || booking.status === "MENUNGGU_ATASAN"
           ? "active"
-          : booking.status === "DITOLAK_ADMIN"
+          : booking.status === "DITOLAK_ADMIN" || booking.status === "DITOLAK_ATASAN"
             ? "rejected"
-            : booking.status === "BATAL_PEMOHON" && !booking.approvedAdminAt
+            : booking.status === "BATAL_PEMOHON" && !booking.approvedAtasanAt
               ? "cancelled"
-              : booking.approvedAdminAt
+              : booking.status === "DISETUJUI"
                 ? "done"
                 : "pending",
-      at: booking.approvedAdminAt,
-    },
-    {
-      label: "Disetujui Atasan",
-      status:
-        booking.status === "MENUNGGU_ATASAN"
-          ? "active"
-          : booking.status === "DITOLAK_ATASAN"
-            ? "rejected"
-            : booking.approvedAtasanAt
-              ? "done"
-              : "pending",
-      at: booking.approvedAtasanAt,
-    },
-    {
-      label: "Surat resmi terbit",
-      status: booking.status === "DISETUJUI" ? "done" : "pending",
-      at: booking.approvedAtasanAt,
+      at: booking.approvedAtasanAt ?? booking.approvedAdminAt,
     },
   ];
 
@@ -253,7 +233,7 @@ export function BookingDetail({
         </ol>
       </div>
 
-      {/* Catatan admin / atasan (if any) */}
+      {/* Catatan admin (if any) */}
       {(booking.catatanAdmin || booking.catatanAtasan) && (
         <div className="rounded-2xl border border-ink-100 bg-white p-5 space-y-3">
           {booking.catatanAdmin && (
@@ -265,7 +245,7 @@ export function BookingDetail({
           )}
           {booking.catatanAtasan && (
             <Note
-              from={`Atasan · ${booking.atasanNama ?? "—"}`}
+              from={`Catatan Tambahan · ${booking.atasanNama ?? "—"}`}
               text={booking.catatanAtasan}
               tone={booking.status === "DITOLAK_ATASAN" ? "danger" : "gold"}
             />
@@ -273,43 +253,33 @@ export function BookingDetail({
         </div>
       )}
 
-      {/* Action panel */}
-      {(adminCanAct || atasanCanAct) && (
+      {/* Action panel — admin sebagai approver final */}
+      {adminCanAct && (
         <div className="rounded-2xl border border-ink-100 bg-white p-5 space-y-3">
           <p className="text-[11px] tracking-[0.16em] uppercase text-gold-700 serif">
-            {adminCanAct ? "Persetujuan Admin" : "Persetujuan Atasan"}
+            Persetujuan Admin
           </p>
           <Textarea
-            placeholder={
-              adminCanAct
-                ? "Catatan admin (opsional jika setuju, wajib jika tolak)"
-                : "Catatan atasan (opsional jika setuju, wajib jika tolak)"
-            }
+            placeholder="Catatan admin (opsional jika setuju, wajib jika tolak)"
             value={catatan}
             onChange={(e) => setCatatan(e.target.value)}
             rows={3}
           />
-          {atasanCanAct && (
-            <SignaturePad
-              ref={atasanSigRef}
-              label="Tanda tangan atasan"
-              hint="Ketik nama lengkap — sistem otomatis merender sebagai tanda tangan."
-              defaultName={currentUserName}
-              onChange={setAtasanTtdUrl}
-            />
-          )}
+          <SignaturePad
+            ref={adminSigRef}
+            label="Tanda tangan admin"
+            hint="Ketik nama lengkap — sistem otomatis merender sebagai tanda tangan."
+            defaultName={currentUserName}
+            onChange={setAdminTtdUrl}
+          />
           <div className="flex flex-wrap gap-2 justify-end">
             <Button variant="destructive" disabled={busy} onClick={reject}>
               <X className="h-4 w-4" />
               Tolak
             </Button>
-            <Button
-              variant={atasanCanAct ? "gold" : "default"}
-              disabled={busy}
-              onClick={approve}
-            >
+            <Button variant="gold" disabled={busy} onClick={approve}>
               <Check className="h-4 w-4" />
-              {atasanCanAct ? "Setujui & Terbitkan Surat" : "Teruskan ke Atasan"}
+              Setujui & Terbitkan Surat
             </Button>
           </div>
         </div>
@@ -328,7 +298,7 @@ export function BookingDetail({
               dataUrl={booking.pemohonTtdUrl}
             />
             <SignatureBlock
-              title={booking.atasanJabatan ?? "Atasan"}
+              title={booking.atasanJabatan ?? "Admin Ruangan"}
               name={booking.atasanNama ?? "—"}
               dataUrl={booking.atasanTtdUrl}
             />

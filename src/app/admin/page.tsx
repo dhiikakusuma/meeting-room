@@ -15,7 +15,7 @@ export default async function AdminDashboard() {
   const [counts, inbox, ruangan, totalRuangan, totalBidang] = await Promise.all([
     prisma.booking.groupBy({ by: ["status"], _count: true }),
     prisma.booking.findMany({
-      where: { status: "MENUNGGU_ADMIN" },
+      where: { status: { in: ["MENUNGGU_ADMIN", "MENUNGGU_ATASAN"] } },
       orderBy: { createdAt: "asc" },
       take: 5,
       include: { ruangan: { select: { nama: true } } },
@@ -25,15 +25,21 @@ export default async function AdminDashboard() {
     prisma.bidang.count(),
   ]);
 
+  // MENUNGGU_ATASAN adalah status legacy — admin sekarang adalah approver
+  // final, jadi keduanya digabung jadi 1 antrian "menunggu persetujuan".
   const summary = {
-    pendingAdmin: 0,
-    pendingAtasan: 0,
+    pending: 0,
     disetujui: 0,
+    ditolak: 0,
   };
   for (const c of counts) {
-    if (c.status === "MENUNGGU_ADMIN") summary.pendingAdmin = c._count;
-    else if (c.status === "MENUNGGU_ATASAN") summary.pendingAtasan = c._count;
-    else if (c.status === "DISETUJUI") summary.disetujui = c._count;
+    if (c.status === "MENUNGGU_ADMIN" || c.status === "MENUNGGU_ATASAN") {
+      summary.pending += c._count;
+    } else if (c.status === "DISETUJUI") {
+      summary.disetujui = c._count;
+    } else if (c.status === "DITOLAK_ADMIN" || c.status === "DITOLAK_ATASAN") {
+      summary.ditolak += c._count;
+    }
   }
 
   return (
@@ -47,15 +53,15 @@ export default async function AdminDashboard() {
         </h1>
 
         <div className="mt-5 grid grid-cols-3 gap-2 max-w-md">
-          <Stat label="Inbox" value={summary.pendingAdmin} highlight />
-          <Stat label="Menunggu Atasan" value={summary.pendingAtasan} />
+          <Stat label="Menunggu" value={summary.pending} highlight />
           <Stat label="Disetujui" value={summary.disetujui} />
+          <Stat label="Ditolak" value={summary.ditolak} />
         </div>
       </section>
 
       <div className="space-y-6">
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
-          <QuickAction href="/admin/booking" icon={Inbox} label="Inbox Booking" badge={summary.pendingAdmin} />
+          <QuickAction href="/admin/booking" icon={Inbox} label="Inbox Booking" badge={summary.pending} />
           <QuickAction href="/admin/kalender" icon={CalendarRange} label="Kalender" />
           <QuickAction href="/admin/ruangan" icon={DoorOpen} label="Kelola Ruangan" sub={`${totalRuangan} ruangan`} />
           <QuickAction href="/admin/bidang" icon={Building2} label="Kelola Bidang" sub={`${totalBidang} bidang`} />

@@ -1,7 +1,8 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { prisma } from "@/lib/prisma";
+import { requireRole } from "@/lib/auth";
 import { BookingDetail } from "@/components/booking-detail";
 
 export const dynamic = "force-dynamic";
@@ -9,6 +10,9 @@ export const dynamic = "force-dynamic";
 type Ctx = { params: Promise<{ id: string }> };
 
 export default async function AdminBookingDetailPage({ params }: Ctx) {
+  const me = await requireRole("admin");
+  if (!me) redirect("/login/admin");
+
   const { id } = await params;
   const booking = await prisma.booking.findUnique({
     where: { id },
@@ -28,7 +32,7 @@ export default async function AdminBookingDetailPage({ params }: Ctx) {
         <ArrowLeft className="h-3.5 w-3.5" />
         Kembali ke inbox
       </Link>
-      <BookingDetail booking={booking} role="admin" />
+      <BookingDetail booking={booking} role="admin" currentUserName={me.namaLengkap} />
     </div>
   );
 }
