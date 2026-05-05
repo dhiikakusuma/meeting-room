@@ -21,11 +21,37 @@ const DEFAULT_RUANGAN = [
   },
 ];
 
-export async function GET() {
+function authorized(req: Request): boolean {
+  // Allow only when explicitly enabled by env (intended for first-time setup),
+  // OR when caller provides the matching SEED_TOKEN secret.
+  if (process.env.SEED_ENABLED === "1") return true;
+  const expected = process.env.SEED_TOKEN;
+  if (!expected) return false;
+  const auth = req.headers.get("authorization") ?? "";
+  const url = new URL(req.url);
+  const token = auth.startsWith("Bearer ")
+    ? auth.slice("Bearer ".length).trim()
+    : url.searchParams.get("token") ?? "";
+  return token.length > 0 && token === expected;
+}
+
+export async function GET(req: Request) {
+  if (!authorized(req)) {
+    return NextResponse.json(
+      { error: "Forbidden. Set SEED_ENABLED=1 atau panggil dengan ?token=<SEED_TOKEN>." },
+      { status: 403 },
+    );
+  }
   return runSeed();
 }
 
-export async function POST() {
+export async function POST(req: Request) {
+  if (!authorized(req)) {
+    return NextResponse.json(
+      { error: "Forbidden. Set SEED_ENABLED=1 atau kirim header Authorization: Bearer <SEED_TOKEN>." },
+      { status: 403 },
+    );
+  }
   return runSeed();
 }
 
@@ -82,8 +108,9 @@ async function runSeed() {
     ok: true,
     created,
     info: {
-      admin: { password: "admin123", login: "/login/admin" },
-      atasan: { password: "atasan123", login: "/login/atasan" },
+      admin: { login: "/login/admin" },
+      atasan: { login: "/login/atasan" },
+      note: "Default credentials only ada di dokumentasi internal — tidak dikembalikan oleh API.",
     },
   });
 }

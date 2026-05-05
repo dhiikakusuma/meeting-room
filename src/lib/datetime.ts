@@ -57,7 +57,7 @@ export function isOverlap(
 ): boolean {
   const as = timeToMinutes(aStart);
   const ae = timeToMinutes(aEnd) + bufferMinutes;
-  const bs = timeToMinutes(bStart) - bufferMinutes;
+  const bs = timeToMinutes(bStart);
   const be = timeToMinutes(bEnd);
   return as < be && bs < ae;
 }
