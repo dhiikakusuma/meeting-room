@@ -164,7 +164,11 @@ export function AppShell({ role, user, children }: Props) {
           />
         )}
 
-        <main className="min-h-screen">{children}</main>
+        <main className="min-h-screen">
+          <div className="mx-auto w-full max-w-6xl px-5 md:px-8 py-6 md:py-10">
+            {children}
+          </div>
+        </main>
       </div>
     </div>
   );

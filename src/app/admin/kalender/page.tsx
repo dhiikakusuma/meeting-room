@@ -9,7 +9,7 @@ export default async function AdminKalenderPage() {
     select: { id: true, nama: true, lantai: true },
   });
   return (
-    <div className="px-5 sm:px-8 py-6 max-w-4xl">
+    <div className="max-w-4xl mx-auto">
       <h1 className="serif text-2xl font-semibold text-ink-900">Kalender Ruangan</h1>
       <p className="text-sm text-ink-500 mt-1">Cek slot terkunci & pending per ruangan.</p>
       <div className="mt-5">

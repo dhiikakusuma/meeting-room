@@ -10,7 +10,7 @@ export default async function AdminInboxPage() {
     include: { ruangan: { select: { nama: true } } },
   });
   return (
-    <div className="px-5 sm:px-8 py-6 max-w-5xl">
+    <div>
       <h1 className="serif text-2xl font-semibold text-ink-900">Inbox Booking</h1>
       <p className="text-sm text-ink-500 mt-1">
         {items.length} pengajuan menunggu persetujuan admin. Anda dapat menyetujui satu per satu atau secara massal.

@@ -34,8 +34,8 @@ export default async function AtasanDashboard() {
   }
 
   return (
-    <div>
-      <section className="hero-room px-5 sm:px-8 pt-6 pb-7 text-cream-50">
+    <div className="space-y-6">
+      <section className="hero-room rounded-3xl overflow-hidden px-5 sm:px-8 pt-6 pb-7 text-cream-50">
         <p className="serif text-[10.5px] tracking-[0.18em] text-gold-200 uppercase">
           Persetujuan Akhir
         </p>
@@ -51,7 +51,7 @@ export default async function AtasanDashboard() {
         </div>
       </section>
 
-      <div className="px-5 sm:px-8 py-6 max-w-4xl space-y-6">
+      <div className="space-y-6">
         <div className="grid sm:grid-cols-2 gap-3">
           <Button asChild size="lg" variant="gold" className="w-full">
             <Link href="/atasan/booking">

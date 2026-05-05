@@ -15,7 +15,7 @@ export default async function ExportPage() {
     }),
   ]);
   return (
-    <div className="px-5 sm:px-8 py-6 max-w-2xl">
+    <div className="max-w-2xl mx-auto">
       <h1 className="serif text-2xl font-semibold text-ink-900">Export Excel</h1>
       <p className="text-sm text-ink-500 mt-1">
         Unduh laporan booking dalam format .xlsx, dapat difilter berdasarkan bulan, ruangan, atau bidang.

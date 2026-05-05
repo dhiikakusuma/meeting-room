@@ -39,9 +39,9 @@ export default async function PemohonDashboard() {
   }
 
   return (
-    <div>
+    <div className="space-y-6">
       {/* Hero room banner */}
-      <section className="hero-room px-5 sm:px-8 pt-6 pb-7 text-cream-50">
+      <section className="hero-room rounded-3xl overflow-hidden px-5 sm:px-8 pt-6 pb-7 text-cream-50">
         <p className="serif text-[10.5px] tracking-[0.18em] text-gold-200 uppercase">
           Pemohon
         </p>
@@ -59,7 +59,7 @@ export default async function PemohonDashboard() {
         </div>
       </section>
 
-      <div className="px-5 sm:px-8 py-6 space-y-6 max-w-4xl">
+      <div className="space-y-6">
         {/* Quick actions */}
         <div className="grid sm:grid-cols-2 gap-3">
           <Button asChild size="lg" className="w-full">

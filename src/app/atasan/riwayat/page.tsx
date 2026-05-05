@@ -30,7 +30,7 @@ export default async function AtasanRiwayatPage({ searchParams }: { searchParams
   ];
 
   return (
-    <div className="px-5 sm:px-8 py-6 max-w-4xl">
+    <div className="max-w-4xl mx-auto">
       <h1 className="serif text-2xl font-semibold text-ink-900">Riwayat Persetujuan</h1>
       <p className="text-sm text-ink-500 mt-1">
         Pengajuan yang pernah Anda tinjau atau menunggu Anda.

@@ -50,7 +50,7 @@ export default async function AdminRiwayatPage({
   ] as const;
 
   return (
-    <div className="px-5 sm:px-8 py-6 max-w-5xl">
+    <div>
       <h1 className="serif text-2xl font-semibold text-ink-900">Riwayat Booking</h1>
       <p className="text-sm text-ink-500 mt-1">
         Daftar lengkap semua pengajuan. Total {list.length} record (maks 200).

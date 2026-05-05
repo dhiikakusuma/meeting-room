@@ -8,7 +8,7 @@ export default async function KelolaRuanganPage() {
     orderBy: [{ urutan: "asc" }, { nama: "asc" }],
   });
   return (
-    <div className="px-5 sm:px-8 py-6 max-w-4xl">
+    <div className="max-w-4xl mx-auto">
       <h1 className="serif text-2xl font-semibold text-ink-900">Kelola Ruangan</h1>
       <p className="text-sm text-ink-500 mt-1">
         Tambah, edit, atau nonaktifkan ruangan rapat. Ruangan nonaktif tidak muncul di form pemohon.
